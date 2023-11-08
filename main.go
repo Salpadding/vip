@@ -22,7 +22,7 @@ const (
 	virtualPort = 80
 
 	realIp   = "192.168.1.33"
-	realPort = 80
+	realPort = 30737
 )
 
 //go:generate bpf2go -type arp_sender bpf xdp.c -- -Iheaders
@@ -63,6 +63,8 @@ func main() {
 
 	cli, _ := arp.Dial(iface)
 
+    // 创建 dummy interface 添加 vip
+    // 拉起 haproxy
 	loopRb(objs.Messages, cli, virtualIp)
 }
 

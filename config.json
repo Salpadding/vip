@@ -1,17 +1,21 @@
-[
-    {
-        "vip": "192.168.1.199",
-        "interface": "ens160",
-        "proxy": [
+{
+    "ens160" : {
+        "vips": [
             {
-                "localPort": 80,
-                "backends": [
+                "vip": "192.168.1.199",
+                "services": [
                     {
-                        "remoteIp": "192.168.1.33",
-                        "remotePort": 80
+                        "vport": 80,
+                        "backends": [
+                            {
+                                "ip": "192.168.1.33",
+                                "port": 30737
+                            }
+                        ]
                     }
                 ]
             }
-        ]
+        ],
+        "discoveryPort": 7373
     }
-]
+}

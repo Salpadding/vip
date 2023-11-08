@@ -63,6 +63,15 @@ int xdp_prog_func(struct xdp_md *ctx) {
 	}
 
 
+    // tcp vip:vport -> realip:realport
+    // 同时作 snat
+    // 检查是否是 tcp, syn 如果是 syn 要申请端口映射
+    // srcip:sport -> vip:localport
+    // 填vip 而不是本机的ip 可以保证 后续的路由此网卡
+
+    // 如果包来自realip:realport 而且目标是vip:localport
+    // 可以再转回去
+
 
     // 查看是否是 arp 协议
 	if (eth->h_proto != bpf_htons(ETH_P_ARP)) {
