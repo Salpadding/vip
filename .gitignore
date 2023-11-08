@@ -1,0 +1,6 @@
+.ccls*
+headers
+*.o
+bpf_*.go
+vip
+
