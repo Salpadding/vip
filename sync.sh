@@ -3,6 +3,7 @@ echo '
 export GOPROXY=https://goproxy.cn
 cd $HOME/vip
 ! [[ -d headers ]] && ln -s $HOME/ebpf/examples/headers headers
+rm -rf vip
 go generate
 go build .
 ' | ssh roots@192.168.1.33 bash

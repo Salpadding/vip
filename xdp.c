@@ -23,6 +23,15 @@ struct arp_header {
     __be32 target_ip;
 } __attribute__((packed));
 
+
+struct arp_sender {
+    char sender_mac[MAC_LENGTH];
+    __be32 sender_ip;
+} __attribute__((packed));
+
+
+const struct arp_sender *unused __attribute__((unused));
+
 // ip -> 1/0
 // 表示这个 ip 是否属于当前机器
 struct {
@@ -33,7 +42,7 @@ struct {
 } vip_set SEC(".maps");
 
 
-// ringbuffer 把客户端 ip 传给 go 
+// ringbuffer 把客户端mac地址 传给 go 
 struct {
 	__uint(type, BPF_MAP_TYPE_RINGBUF);
 	__uint(max_entries, 1 << 24);
@@ -81,15 +90,15 @@ int xdp_prog_func(struct xdp_md *ctx) {
     }
 
 
-    // 把请求方的 ip 传递给 go
-    __u32* client_ip = bpf_ringbuf_reserve(&messages, sizeof(__u32), 0);
+    // 把请求方的 mac 地址传递给 go
+    struct arp_sender* sender = bpf_ringbuf_reserve(&messages, sizeof(struct arp_sender), 0);
     // 忽略缓冲溢出
-    if(!client_ip) {
+    if(!sender) {
         goto done;
     }
 
-    *client_ip = ah->sender_ip;
-    bpf_ringbuf_submit(client_ip, 0);
+    memcpy(sender, &(ah->sender_mac), sizeof(*sender));
+    bpf_ringbuf_submit(sender, 0);
 
 
 done:

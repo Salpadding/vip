@@ -1,0 +1,17 @@
+[
+    {
+        "vip": "192.168.1.199",
+        "interface": "ens160",
+        "proxy": [
+            {
+                "localPort": 80,
+                "backends": [
+                    {
+                        "remoteIp": "192.168.1.33",
+                        "remotePort": 80
+                    }
+                ]
+            }
+        ]
+    }
+]

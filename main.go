@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
+	_ "encoding"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"log"
 	"net"
+	"net/netip"
 	"os"
 
 	"github.com/cilium/ebpf"
@@ -22,7 +25,7 @@ const (
 	realPort = 80
 )
 
-//go:generate bpf2go bpf xdp.c -- -Iheaders
+//go:generate bpf2go -type arp_sender bpf xdp.c -- -Iheaders
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatalf("Please specify a network interface")
@@ -55,8 +58,12 @@ func main() {
 	log.Printf("Attached XDP program to iface %q (index %d)", iface.Name, iface.Index)
 	log.Printf("Press Ctrl-C to exit and remove the program")
 
-    addVip(virtualIp, objs)
-	loopRb(objs.Messages)
+	// 添加 vip 到 ebpf 内存中
+	addVip(virtualIp, objs)
+
+	cli, _ := arp.Dial(iface)
+
+	loopRb(objs.Messages, cli, virtualIp)
 }
 
 func addVip(s string, objs bpfObjects) {
@@ -69,7 +76,33 @@ func removeVip(s string, objs bpfObjects) {
 	objs.bpfMaps.VipSet.Delete(binary.LittleEndian.Uint32(ip))
 }
 
-func loopRb(rb *ebpf.Map) {
+// 调用 ipvs 添加 backend
+func addBackend(vip string, localPort int, realIp string, realPort int) {
+
+}
+
+// 调用 ipvs 删除 backend
+func removeBackend(vip string, localPort int, realIp string, realPort int) {
+
+}
+
+func(s *bpfArpSender) hw() net.HardwareAddr{
+    var hw net.HardwareAddr = make([]byte, 6)
+    for i := 0; i < 6; i++ {
+        hw[i] = byte(s.SenderMac[i])
+    }
+    return hw
+}
+
+func(s *bpfArpSender) ip() netip.Addr {
+    var buf [4]byte
+    binary.LittleEndian.PutUint32(buf[:], s.SenderIp) 
+    return netip.AddrFrom4(buf)
+}
+
+func loopRb(rb *ebpf.Map, cli *arp.Client, vip string) {
+	vipAddr, _ := netip.ParseAddr(vip)
+
 	// Open a ringbuf reader from userspace RINGBUF map described in the
 	// eBPF C program.
 	rd, err := ringbuf.NewReader(rb)
@@ -78,10 +111,9 @@ func loopRb(rb *ebpf.Map) {
 	}
 	defer rd.Close()
 
+    var sender bpfArpSender
 	// Close the reader when the process receives a signal, which will exit
 	log.Println("Waiting for events..")
-
-	var ip net.IP = make([]byte, 4)
 
 	for {
 		record, err := rd.Read()
@@ -94,38 +126,20 @@ func loopRb(rb *ebpf.Map) {
 			continue
 		}
 
-		copy(ip[:], record.RawSample)
-		fmt.Printf("%s\n", ip)
+        binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &sender)
 
+		fmt.Printf("%s\n", sender.hw())
+		fmt.Printf("%s\n", sender.ip())
+		cli.Reply(&arp.Packet{
+            SenderHardwareAddr: sender.hw(),
+            SenderIP: sender.ip(),
+        }, cli.HardwareAddr(), vipAddr)
 	}
-}
-
-type args struct {
-	vip    net.IP
-	realIp net.IP
-}
-
-func (a *args) parse() {
-	a.vip = net.ParseIP(virtualIp)
-}
-
-type arpCli struct {
-	args      *args
-	ifaceName string
-	iface     net.Interface
-	cli       arp.Client
-}
-
-func (a *arpCli) resp(dst string) {
 }
 
 // listenRingBuffer 监听 ringbuffer
 // 如果当前节点是 master 从网卡发送 arp 回复
 // 在当前子网中把 vip 和本机 mac 地址绑定
 func listenRingBuffer() {
-
-}
-
-func arpResp(ask string) {
 
 }
