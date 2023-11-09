@@ -147,6 +147,7 @@ func (s *server) start() {
 					for _, vip := range s.Vips {
 						s.addVip(vip)
 					}
+                    // TODO: 发送一个免费arp 刷新arp缓存
 				} else {
 					for _, vip := range s.Vips {
 						s.removeVip(vip)
