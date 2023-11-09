@@ -27,6 +27,8 @@ struct arp_header {
 struct arp_sender {
     char sender_mac[MAC_LENGTH];
     __be32 sender_ip;
+    char target_mac[MAC_LENGTH];
+    __be32 target_ip;
 } __attribute__((packed));
 
 

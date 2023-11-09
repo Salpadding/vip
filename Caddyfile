@@ -1,0 +1,11 @@
+http://:80 {
+    reverse_proxy {
+        to http://192.168.1.33:30737 http://192.168.1.39:30737 http://192.168.1.49:30737
+        lb_policy ip_hash
+        health_uri /
+        health_headers {
+            Host localhost
+        }
+        health_status 404
+    }
+}

@@ -1,21 +1,15 @@
-{
-    "ens160" : {
-        "vips": [
-            {
-                "vip": "192.168.1.199",
-                "services": [
-                    {
-                        "vport": 80,
-                        "backends": [
-                            {
-                                "ip": "192.168.1.33",
-                                "port": 30737
-                            }
-                        ]
-                    }
-                ]
-            }
-        ],
-        "discoveryPort": 7373
-    }
-}
+ [
+        {
+            "interface": "ens160",
+            "dummyIf": "vip",
+            "vips": [
+                 "192.168.1.199"
+            ],
+            "discovery": {
+                "port": 7777,
+                "group": ["192.168.1.33", "192.168.1.39", "192.168.1.49"]
+            },
+            "lb": ["/usr/bin/caddy", "run", "--config", "Caddyfile"]
+        }
+ ]
+
