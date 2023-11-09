@@ -1,0 +1,8 @@
+[Service]
+WorkingDirectory=/home/ubuntu/vip
+User=root
+ExecStart=/home/ubuntu/vip/vip config.json
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
